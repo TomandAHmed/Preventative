@@ -14,7 +14,7 @@ import json
 from placekey.api import PlacekeyAPI
 from io import StringIO
 
-placekey_api_key = "kPiQScbIp1BlxMChirEljha7fh2FatF8"
+placekey_api_key = "3evKPNQovEe3AGAANqXiMr9eNp4B38Fh"
 url = "https://pacekey.nyc3.digitaloceanspaces.com/placekeys_standardized%20copy%207.csv"
 zrl = "https://pacekey.nyc3.digitaloceanspaces.com/REI_09172024_standradised_with%20placekeys.csv"
 
@@ -60,6 +60,10 @@ cache_df = pd.read_csv(cache_file_path, dtype={
     'postal_code': str,
     'Parcel number': str
 })
+
+cache_df['street_address']=cache_df['street_address'].str.lower()
+cache_df['city']=cache_df['city'].str.lower()
+
 def clean_api_responses(data_jsoned, responses):
     print("Number of original records: ", len(data_jsoned))
     print('Total individual queries returned: ', len(responses))
@@ -175,7 +179,6 @@ address_patterns = [(re.compile(pattern, re.IGNORECASE), replacement) for patter
     r'\bclifs\b\.?': 'Clfs', r'\bclfs\b\.?': 'Clfs',
     r'\bclub\b\.?': 'Clb', r'\bclb\b\.?': 'Clb',
     r'\bcommon\b\.?': 'Cmn',
-    r'\bcr\b\.?': 'Cir',
     r'\btrafficway\b\.?': 'Trfy',
     r'\bcommons\b\.?': 'Cmns',
     r'\btrack\b\.?': 'Trak', r'\btracks\b\.?': 'Trak', r'\btrak\b\.?': 'Trak', r'\btrk\b\.?': 'Trak',
@@ -274,7 +277,7 @@ address_patterns = [(re.compile(pattern, re.IGNORECASE), replacement) for patter
     r'\bterrace\b\.?': 'Ter', r'\bter\b\.?': 'Ter',
     r'\bplace\b\.?': 'Pl', r'\bpl\b\.?': 'Pl',
     r'\bcircle\b\.?': 'Cir', r'\bcir\b\.?': 'Cir', r'\bcirc\b\.?': 'Cir', r'\bcircl\b\.?': 'Cir',
-    r'\bcrcle\b\.?': 'Cir',
+    r'\bcrcle\b\.?': 'Cir',r'\bcr\b\.?': 'Cir',
     r'\bsquare\b\.?': 'Sq', r'\bsq\b\.?': 'Sq',
     r'\bhighway\b\.?': 'Hwy', r'\bhwy\b\.?': 'Hwy',
     r'\bplaza\b\.?': 'Plz', r'\bplz\b\.?': 'Plz',
@@ -826,7 +829,8 @@ if uploaded_file is not None:
                 print(f"Extra columns: {extra_columns}")
                 # Optionally, remove extra columns if found
                 df_place = df_place.drop(columns=list(extra_columns))
-
+            df_place['street_address']=df_place['street_address'].str.lower()
+            df_place['city']=df_place['city'].str.lower()
             # Step 5: Convert to JSON
             data_jsoned = json.loads(df_place.to_json(orient='records'))
 
@@ -856,13 +860,13 @@ if uploaded_file is not None:
                                              right_on='id_num',
                                              how='left')
 
-                # new_cache_entries = new_cache_entries[['placekey', 'street_address', 'city', 'region', 'postal_code']]
-                # frames = [new_cache_entries, cache_df]
-                # cache_df = pd.concat(frames).drop_duplicates(subset=[ 'street_address', 'city'],
-                #                                               keep='first')
+                new_cache_entries = new_cache_entries[['placekey', 'street_address', 'city', 'region', 'postal_code']]
+                frames = [new_cache_entries, cache_df]
+                cache_df = pd.concat(frames).drop_duplicates(subset=[ 'street_address', 'city'],
+                                                              keep='first')
 
-                # # Save the updated cache file
-                # cache_df.to_csv(cache_file_path, index=False)
+                # Save the updated cache file
+                cache_df.to_csv(cache_file_path, index=False)
                 print("Cache updated immediately after API response processing.")
 
             # Combine cached responses with API responses for further processing
@@ -904,11 +908,11 @@ if uploaded_file is not None:
             # Output the final updated DataFrame
             df_final_filtered = df_final_filtered.drop_duplicates(subset=['street_address'])
 
-            # new_records = df_final_filtered[['placekey', 'street_address', 'city', 'region', 'postal_code']]
-            # frames = [new_records, rei]
-            # rei = pd.concat(frames).drop_duplicates(subset=['street_address', 'city'],
-            #                                              keep='first')
-            # rei.to_csv(REI_local_path,index=False)
+            new_records = df_final_filtered[['placekey', 'street_address', 'city', 'region', 'postal_code']]
+            frames = [new_records, rei]
+            rei = pd.concat(frames).drop_duplicates(subset=['street_address', 'city'],
+                                                         keep='first')
+            rei.to_csv(REI_local_path,index=False)
             df_final_filtered.rename(columns={'street_address': 'Property Address',
                                                'city': 'Property City',
                                                'region': 'Property State',
@@ -929,9 +933,9 @@ if uploaded_file is not None:
                 - To move the file, use your file explorer and drag the downloaded file to the preferred folder.
             """)
         if st.button("Fix tag and Standardize"):
-            df.rename(columns={'Number Quality Score 3': 'Phone 3 Tags',
-                                               'Number Quality Score 2': 'Phone 2 Tags',
-                                               'Number Quality Score 1': 'Phone 1 Tags',
+            df.rename(columns={'Number Quality Score 3': 'Phone 3 Tag',
+                                               'Number Quality Score 2': 'Phone 2 tag',
+                                               'Number Quality Score 1': 'Phone 1 Tag',
                                                }, inplace=True)
 
             
@@ -1051,12 +1055,12 @@ if uploaded_file is not None:
                                              how='left')
 
                 new_cache_entries = new_cache_entries[['placekey', 'street_address', 'city', 'region', 'postal_code']]
-                # frames = [new_cache_entries, cache_df]
-                # cache_df = pd.concat(frames).drop_duplicates(subset=[ 'street_address', 'city'],
-                #                                               keep='first')
+                frames = [new_cache_entries, cache_df]
+                cache_df = pd.concat(frames).drop_duplicates(subset=[ 'street_address', 'city'],
+                                                              keep='first')
 
-                # # Save the updated cache file
-                # cache_df.to_csv(cache_file_path, index=False)
+                # Save the updated cache file
+                cache_df.to_csv(cache_file_path, index=False)
                 print("Cache updated immediately after API response processing.")
 
             # Combine cached responses with API responses for further processing
@@ -1100,9 +1104,9 @@ if uploaded_file is not None:
 
             new_records = df_final_filtered[['placekey', 'street_address', 'city', 'region', 'postal_code']]
             frames = [new_records, rei]
-            # rei = pd.concat(frames).drop_duplicates(subset=['street_address', 'city'],
-            #                                              keep='first')
-            # rei.to_csv(REI_local_path,index=False)
+            rei = pd.concat(frames).drop_duplicates(subset=['street_address', 'city'],
+                                                         keep='first')
+            rei.to_csv(REI_local_path,index=False)
             df_final_filtered.rename(columns={'street_address': 'Property Address',
                                                'city': 'Property City',
                                                'region': 'Property State',
