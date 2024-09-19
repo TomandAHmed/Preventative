@@ -60,8 +60,6 @@ cache_df = pd.read_csv(cache_file_path, dtype={
     'postal_code': str,
     'Parcel number': str
 })
-# cache_df['street_address']=cache_df['street_address'].str.lower()
-# cache_df['city']=cache_df['city'].str.lower()
 def clean_api_responses(data_jsoned, responses):
     print("Number of original records: ", len(data_jsoned))
     print('Total individual queries returned: ', len(responses))
@@ -828,6 +826,7 @@ if uploaded_file is not None:
                 print(f"Extra columns: {extra_columns}")
                 # Optionally, remove extra columns if found
                 df_place = df_place.drop(columns=list(extra_columns))
+
             # Step 5: Convert to JSON
             data_jsoned = json.loads(df_place.to_json(orient='records'))
 
