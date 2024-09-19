@@ -15,8 +15,8 @@ from placekey.api import PlacekeyAPI
 from io import StringIO
 
 placekey_api_key = "kPiQScbIp1BlxMChirEljha7fh2FatF8"
-url = "https://placekey.nyc3.cdn.digitaloceanspaces.com/placekeys_standardized%20copy%207.csv"
-zrl = "https://placekey.nyc3.cdn.digitaloceanspaces.com/REI%20Sift-All%20data-08262024_standardized+placekeys%20(4).csv"
+url = "https://pacekey.nyc3.digitaloceanspaces.com/placekeys_standardized%20copy%207.csv"
+zrl = "https://pacekey.nyc3.digitaloceanspaces.com/REI_09172024_standradised_with%20placekeys.csv"
 
 # Make a request to get the first CSV file
 response = requests.get(url)
@@ -60,6 +60,8 @@ cache_df = pd.read_csv(cache_file_path, dtype={
     'postal_code': str,
     'Parcel number': str
 })
+cache_df['street_address']=cache_df['street_address'].str.lower()
+cache_df['city']=cache_df['city'].str.lower()
 def clean_api_responses(data_jsoned, responses):
     print("Number of original records: ", len(data_jsoned))
     print('Total individual queries returned: ', len(responses))
@@ -826,7 +828,9 @@ if uploaded_file is not None:
                 print(f"Extra columns: {extra_columns}")
                 # Optionally, remove extra columns if found
                 df_place = df_place.drop(columns=list(extra_columns))
-
+                df_place['street_address']=df_place['street_address'].str.lower()
+                df_place['city']=df_place['city'].str.lower()
+                
             # Step 5: Convert to JSON
             data_jsoned = json.loads(df_place.to_json(orient='records'))
 
